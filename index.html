@@ -389,7 +389,7 @@ async function loadFolders(){
 }
 
 function buildGalleryFilters(uploads){
-  const folders=new Set();
+  const folders=new Set();folders.add('默认');
   uploads.forEach(u=>{if(u.folder)folders.add(u.folder)});
   galleryFilters.innerHTML='';
 
@@ -408,14 +408,15 @@ function buildGalleryFilters(uploads){
     btn.textContent=f;btn.dataset.folder=f;
     btn.onclick=()=>{currentGalleryFolder=f;updateGalleryFilterActive();renderGallery(uploads,f)};
 
-    const delBtn=document.createElement('button');
-    delBtn.innerHTML='&times;';
-    delBtn.title='删除文件夹';
-    delBtn.style.cssText='width:18px;height:18px;line-height:16px;padding:0;font-size:14px;background:rgba(239,68,68,0.15);color:var(--error);border:1px solid var(--error);border-radius:4px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:opacity 0.2s;';
-    delBtn.onclick=()=>deleteFolder(f);
-
     wrap.appendChild(btn);
-    wrap.appendChild(delBtn);
+    if(f!=='默认'){
+      const delBtn=document.createElement('button');
+      delBtn.innerHTML='&times;';
+      delBtn.title='删除文件夹';
+      delBtn.style.cssText='width:18px;height:18px;line-height:16px;padding:0;font-size:14px;background:rgba(239,68,68,0.15);color:var(--error);border:1px solid var(--error);border-radius:4px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:opacity 0.2s;';
+      delBtn.onclick=()=>deleteFolder(f);
+      wrap.appendChild(delBtn);
+    }
     galleryFilters.appendChild(wrap);
   });
 }
