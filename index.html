@@ -196,6 +196,17 @@ const galleryGrid=document.getElementById('galleryGrid');
 const galleryFilters=document.getElementById('galleryFilters');
 const folderSelect=document.getElementById('folderSelect');
 
+async function imagebedFetch(input,options={}) {
+  const url=new URL(input);
+  const token=url.searchParams.get('password')||authToken;
+  url.searchParams.delete('password');
+  const headers=new Headers(options.headers||{});
+  headers.set('Authorization','Bearer '+token);
+  const res=await fetch(url.toString(),{...options,headers,cache:'no-store',referrerPolicy:'no-referrer'});
+  if(res.status===401){authToken='';sessionStorage.removeItem('imagebed_token');}
+  return res;
+}
+
 // ===== 通用复制函数（兼容国产浏览器）=====
 async function doCopy(text){
   try{
@@ -230,7 +241,7 @@ async function submitPassword(){
   const pwd=passwordInput.value.trim();
   if(!pwd)return;
   try{
-    const res=await fetch(`${WORKER_URL}/uploads?password=${encodeURIComponent(pwd)}`);
+    const res=await imagebedFetch(`${WORKER_URL}/uploads?password=${encodeURIComponent(pwd)}`);
     if(res.ok){
       authToken=pwd;
       sessionStorage.setItem('imagebed_token',pwd);
@@ -318,7 +329,7 @@ async function doUpload(){
     const formData=new FormData();
     formData.append('file',file);
     try{
-      const res=await fetch(`${WORKER_URL}/upload?password=${encodeURIComponent(authToken)}&folder=${encodeURIComponent(folder)}`,{method:'POST',body:formData});
+      const res=await imagebedFetch(`${WORKER_URL}/upload?password=${encodeURIComponent(authToken)}&folder=${encodeURIComponent(folder)}`,{method:'POST',body:formData});
       const data=await res.json();
       if(data.success){showResult(data);showToast(`${file.name} 上传成功`,'success')}
       else{showToast(data.error||`${file.name} 上传失败`,'error');if(data.error==='Unauthorized'){authToken='';sessionStorage.removeItem('imagebed_token')}}
@@ -362,7 +373,7 @@ function closeGalleryModal(){galleryModal.classList.remove('show')}
 async function loadGallery(){
   galleryGrid.innerHTML='<p style="color:var(--text2);font-size:13px;text-align:center;grid-column:1/-1">加载中...</p>';
   try{
-    const res=await fetch(`${WORKER_URL}/uploads?password=${encodeURIComponent(authToken)}`);
+    const res=await imagebedFetch(`${WORKER_URL}/uploads?password=${encodeURIComponent(authToken)}`);
     const data=await res.json();
     if(!data.success){galleryGrid.innerHTML=`<p style="color:var(--error);text-align:center;grid-column:1/-1">${data.error}</p>`;return}
     buildGalleryFilters(data.uploads);
@@ -372,7 +383,7 @@ async function loadGallery(){
 
 async function loadFolders(){
   try{
-    const res=await fetch(`${WORKER_URL}/folders?password=${encodeURIComponent(authToken)}`);
+    const res=await imagebedFetch(`${WORKER_URL}/folders?password=${encodeURIComponent(authToken)}`);
     const data=await res.json();
     if(data.success){
       const currentVal=folderSelect.value;
@@ -449,7 +460,7 @@ async function deleteImage(key,btn){
   if(!confirm('确定删除这张图片？'))return;
   btn.textContent='删除中';btn.disabled=true;
   try{
-    const res=await fetch(`${WORKER_URL}/delete?password=${encodeURIComponent(authToken)}&key=${encodeURIComponent(key)}`,{method:'POST'});
+    const res=await imagebedFetch(`${WORKER_URL}/delete?password=${encodeURIComponent(authToken)}&key=${encodeURIComponent(key)}`,{method:'POST'});
     const data=await res.json();
     if(data.success){btn.closest('.gallery-item').remove();showToast('删除成功','success')}
     else{showToast(data.error||'删除失败','error');btn.textContent='删除';btn.disabled=false}
@@ -459,7 +470,7 @@ async function deleteImage(key,btn){
 async function deleteFolder(folderName){
   if(!confirm(`删除相册 "${folderName}"？\n其中的 ${folderName === '默认' ? '' : '图片将移动到【默认】文件夹'}！`))return;
   try{
-    const res=await fetch(`${WORKER_URL}/delete-folder?password=${encodeURIComponent(authToken)}&folder=${encodeURIComponent(folderName)}`,{method:'POST'});
+    const res=await imagebedFetch(`${WORKER_URL}/delete-folder?password=${encodeURIComponent(authToken)}&folder=${encodeURIComponent(folderName)}`,{method:'POST'});
     const data=await res.json();
     if(data.success){
       showToast(`相册 "${folderName}" 已删除，${data.moved} 张图片已移至默认`,'success');
@@ -492,7 +503,7 @@ async function confirmMove(){
   if(!moveTargetKey)return;
   const targetFolder=document.getElementById('moveFolderSelect').value;
   try{
-    const res=await fetch(`${WORKER_URL}/move?password=${encodeURIComponent(authToken)}&key=${encodeURIComponent(moveTargetKey)}&folder=${encodeURIComponent(targetFolder)}`,{method:'POST'});
+    const res=await imagebedFetch(`${WORKER_URL}/move?password=${encodeURIComponent(authToken)}&key=${encodeURIComponent(moveTargetKey)}&folder=${encodeURIComponent(targetFolder)}`,{method:'POST'});
     const data=await res.json();
     if(data.success){
       showToast('图片已移动到 "'+targetFolder+'"','success');
